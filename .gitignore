@@ -67,4 +67,4 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
-src/services/firebase.js
+#src/services/firebase.js
