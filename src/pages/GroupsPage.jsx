@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, useToast } from '../App';
 import { subscribeToGroups, createGroup, joinGroup, deleteGroup, getGroupColor } from '../services/firestoreService';
 import { useVibration } from '../hooks/useVibration';
+import { useGeolocation } from '../hooks/useGeolocation';
 
 export default function GroupsPage() {
   const { user } = useAuth();
@@ -10,6 +11,7 @@ export default function GroupsPage() {
   const { showToast } = useToast();
   const { vibrateSuccess } = useVibration();
 
+  const { location: gpsLocation } = useGeolocation();
   const [groups, setGroups] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('create');
@@ -18,6 +20,11 @@ export default function GroupsPage() {
   const [joinId, setJoinId] = useState('');
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [pickedLocation, setPickedLocation] = useState(null);
+  const mapPickerRef = useRef(null);
+  const mapPickerInstance = useRef(null);
+  const pickerMarkerRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
@@ -25,15 +32,77 @@ export default function GroupsPage() {
     return unsub;
   }, [user]);
 
+  useEffect(() => {
+    if (!showMapPicker || !mapPickerRef.current) return;
+
+    const initPicker = async () => {
+      if (mapPickerInstance.current) return;
+
+      if (!window.L) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      const L = window.L;
+      const lat = pickedLocation?.lat || gpsLocation?.lat || 50.0647;
+      const lng = pickedLocation?.lng || gpsLocation?.lng || 19.9450;
+
+      mapPickerInstance.current = L.map(mapPickerRef.current, {
+        center: [lat, lng],
+        zoom: 15,
+        zoomControl: true,
+        attributionControl: false
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapPickerInstance.current);
+
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:24px;height:24px;background:#4c3bc4;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(76,59,196,0.4)"></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      pickerMarkerRef.current = L.marker([lat, lng], { icon, draggable: true }).addTo(mapPickerInstance.current);
+      setPickedLocation({ lat, lng });
+
+      pickerMarkerRef.current.on('dragend', () => {
+        const pos = pickerMarkerRef.current.getLatLng();
+        setPickedLocation({ lat: pos.lat, lng: pos.lng });
+      });
+
+      mapPickerInstance.current.on('click', (e) => {
+        pickerMarkerRef.current.setLatLng(e.latlng);
+        setPickedLocation({ lat: e.latlng.lat, lng: e.latlng.lng });
+      });
+    };
+
+    initPicker();
+
+    return () => {
+      if (mapPickerInstance.current) {
+        mapPickerInstance.current.remove();
+        mapPickerInstance.current = null;
+        pickerMarkerRef.current = null;
+      }
+    };
+  }, [showMapPicker]);
+
   const handleCreateGroup = async () => {
     if (!groupName.trim()) { showToast('Enter a group name', 'error'); return; }
     setLoading(true);
     try {
       const displayName = user.displayName || user.email?.split('@')[0] || 'Student';
-      await createGroup(groupName.trim(), groupDesc.trim(), user.uid, displayName);
+      const location = pickedLocation || gpsLocation || null;
+      await createGroup(groupName.trim(), groupDesc.trim(), user.uid, displayName, location);
       vibrateSuccess();
       showToast(`Group "${groupName}" created! 🎉`, 'success');
-      setGroupName(''); setGroupDesc(''); setShowModal(false);
+      setGroupName(''); setGroupDesc(''); setShowModal(false); setShowMapPicker(false); setPickedLocation(null);
     } catch (e) {
       showToast('Failed to create group', 'error');
     } finally {
@@ -149,7 +218,7 @@ export default function GroupsPage() {
 
       {}
       {showModal && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); setShowMapPicker(false); setPickedLocation(null); } }}>
           <div className="modal-sheet">
             <div className="modal-handle"></div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
@@ -186,6 +255,28 @@ export default function GroupsPage() {
                   value={groupDesc}
                   onChange={e => setGroupDesc(e.target.value)}
                 />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)' }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <i className="bi bi-geo-alt-fill" style={{ color: 'var(--primary)', marginRight: 6 }}></i>
+                    {pickedLocation
+                      ? `${pickedLocation.lat.toFixed(4)}, ${pickedLocation.lng.toFixed(4)}`
+                      : gpsLocation
+                        ? 'Current location'
+                        : 'No location'}
+                  </span>
+                  <button
+                    onClick={() => setShowMapPicker(v => !v)}
+                    style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: 0 }}
+                  >
+                    {showMapPicker ? 'Hide map' : 'Pick on map'}
+                  </button>
+                </div>
+                {showMapPicker && (
+                  <div
+                    ref={mapPickerRef}
+                    style={{ height: 200, borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1.5px solid var(--border)' }}
+                  />
+                )}
                 <button className="btn-primary-custom" onClick={handleCreateGroup} disabled={loading}>
                   {loading ? 'Creating...' : 'Create Group'}
                 </button>

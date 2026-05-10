@@ -25,7 +25,7 @@ export function getGroupColor(name) {
   return GROUP_COLORS[idx];
 }
 
-export async function createGroup(name, description, userId, userName) {
+export async function createGroup(name, description, userId, userName, location) {
   const groupRef = await addDoc(collection(db, 'groups'), {
     name,
     description: description || '',
@@ -36,9 +36,24 @@ export async function createGroup(name, description, userId, userName) {
     memberIds: [userId],
     memberNames: [userName],
     memberCount: 1,
-    isActive: true
+    isActive: true,
+    ...(location ? { location } : {})
   });
   return groupRef.id;
+}
+
+export function subscribeToAllGroupLocations(callback, onError) {
+  const q = query(collection(db, 'groups'), where('isActive', '==', true));
+  return onSnapshot(q, snapshot => {
+    const locations = snapshot.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(g => g.location?.lat && g.location?.lng)
+      .map(g => ({ id: g.id, name: g.name, lat: g.location.lat, lng: g.location.lng, color: g.color }));
+    callback(locations);
+  }, err => {
+    console.error('subscribeToAllGroupLocations error:', err);
+    onError?.(err);
+  });
 }
 
 /**

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
-import { subscribeToGroups, subscribeToSessions, getGroupColor } from '../services/firestoreService';
+import { subscribeToGroups, subscribeToSessions, subscribeToAllGroupLocations, getGroupColor } from '../services/firestoreService';
 import { useGeolocation } from '../hooks/useGeolocation';
 import MapWidget from '../components/MapWidget';
 
@@ -10,6 +10,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [groupLocations, setGroupLocations] = useState([]);
   const { location } = useGeolocation();
 
   useEffect(() => {
@@ -17,6 +18,11 @@ export default function HomePage() {
     const unsub = subscribeToGroups(user.uid, setGroups);
     return unsub;
   }, [user]);
+
+  useEffect(() => {
+    const unsub = subscribeToAllGroupLocations(setGroupLocations);
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (!groups.length) return;
@@ -110,7 +116,7 @@ export default function HomePage() {
 
       {}
       <div className="section-label" style={{ marginTop: 8 }}>Nearby Locations</div>
-      <MapWidget location={location} compact />
+      <MapWidget location={location} groupLocations={groupLocations} compact />
 
       <div style={{ height: 20 }} />
     </div>

@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 
-export default function MapWidget({ location, compact = false }) {
+export default function MapWidget({ location, groupLocations = [], compact = false }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
+  const groupMarkersRef = useRef([]);
 
   useEffect(() => {
-
     const loadLeaflet = async () => {
       if (mapInstance.current || !mapRef.current) return;
 
@@ -33,52 +33,22 @@ export default function MapWidget({ location, compact = false }) {
 
       mapInstance.current = L.map(mapRef.current, {
         center: [lat, lng],
-        zoom: 15,
+        zoom: 13,
         zoomControl: false,
         attributionControl: false
       });
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(mapInstance.current);
-
-      const icon = L.divIcon({
-        className: '',
-        html: `<div style="width:24px;height:24px;background:#4c3bc4;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(76,59,196,0.4)"></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
-      });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance.current);
 
       if (location) {
-        L.marker([lat, lng], { icon })
-          .addTo(mapInstance.current)
-          .bindPopup('📍 You are here');
-      }
-
-      const nearbyPlaces = [
-        { name: 'University Library', lat: lat + 0.003, lng: lng - 0.002 },
-        { name: 'Coffee & Study Cafe', lat: lat - 0.002, lng: lng + 0.004 },
-        { name: 'Campus Study Hall', lat: lat + 0.001, lng: lng + 0.003 }
-      ];
-
-      nearbyPlaces.forEach(place => {
-        const placeIcon = L.divIcon({
+        const icon = L.divIcon({
           className: '',
-          html: `<div style="
-            background:white;
-            border:2px solid #4c3bc4;
-            border-radius:50%;
-            width:20px;height:20px;
-            display:flex;align-items:center;justify-content:center;
-            box-shadow:0 2px 6px rgba(0,0,0,0.15)
-          "><div style="width:8px;height:8px;background:#4c3bc4;border-radius:50%"></div></div>`,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10]
+          html: `<div style="width:24px;height:24px;background:#4c3bc4;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(76,59,196,0.4)"></div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
         });
-        L.marker([place.lat, place.lng], { icon: placeIcon })
-          .addTo(mapInstance.current)
-          .bindPopup(`📚 ${place.name}`);
-      });
+        L.marker([lat, lng], { icon }).addTo(mapInstance.current).bindPopup('You are here');
+      }
     };
 
     loadLeaflet();
@@ -87,14 +57,36 @@ export default function MapWidget({ location, compact = false }) {
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
+        groupMarkersRef.current = [];
       }
     };
   }, [location]);
 
-  // Update center if location changes
+  useEffect(() => {
+    if (!mapInstance.current || !window.L) return;
+    const L = window.L;
+
+    groupMarkersRef.current.forEach(m => m.remove());
+    groupMarkersRef.current = [];
+
+    groupLocations.forEach(group => {
+      const color = group.color || '#4c3bc4';
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="background:white;border:2px solid ${color};border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15)"><div style="width:8px;height:8px;background:${color};border-radius:50%"></div></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+      const marker = L.marker([group.lat, group.lng], { icon })
+        .addTo(mapInstance.current)
+        .bindPopup(`${group.name}`);
+      groupMarkersRef.current.push(marker);
+    });
+  }, [groupLocations]);
+
   useEffect(() => {
     if (mapInstance.current && location) {
-      mapInstance.current.setView([location.lat, location.lng], 15);
+      mapInstance.current.setView([location.lat, location.lng], 13);
     }
   }, [location]);
 
