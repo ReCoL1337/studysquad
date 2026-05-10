@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, useToast } from '../App';
-import { subscribeToGroups, createGroup, joinGroup, getGroupColor } from '../services/firestoreService';
+import { subscribeToGroups, createGroup, joinGroup, deleteGroup, getGroupColor } from '../services/firestoreService';
 import { useVibration } from '../hooks/useVibration';
 
 export default function GroupsPage() {
@@ -17,6 +17,7 @@ export default function GroupsPage() {
   const [groupDesc, setGroupDesc] = useState('');
   const [joinId, setJoinId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -37,6 +38,20 @@ export default function GroupsPage() {
       showToast('Failed to create group', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteGroup = async (e, groupId) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this group? This cannot be undone.')) return;
+    setDeletingId(groupId);
+    try {
+      await deleteGroup(groupId);
+      showToast('Group deleted', 'success');
+    } catch {
+      showToast('Failed to delete group', 'error');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -101,6 +116,15 @@ export default function GroupsPage() {
               <i className="bi bi-people-fill" style={{ fontSize: 13 }}></i>
               <span>{group.memberCount || 1}</span>
             </div>
+            {group.createdBy === user?.uid && (
+              <button
+                onClick={e => handleDeleteGroup(e, group.id)}
+                disabled={deletingId === group.id}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', color: 'var(--text-muted)', fontSize: 16, marginLeft: 2 }}
+              >
+                <i className="bi bi-trash3"></i>
+              </button>
+            )}
             <i className="bi bi-chevron-right group-chevron" style={{ marginLeft: 4 }}></i>
           </div>
         ))

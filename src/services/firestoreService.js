@@ -79,7 +79,7 @@ export async function leaveGroup(groupId, userId, userName) {
   });
 }
 
-export function subscribeToGroups(userId, callback) {
+export function subscribeToGroups(userId, callback, onError) {
   const q = query(
     collection(db, 'groups'),
     where('memberIds', 'array-contains', userId),
@@ -88,13 +88,17 @@ export function subscribeToGroups(userId, callback) {
   return onSnapshot(q, snapshot => {
     const groups = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     callback(groups);
+  }, err => {
+    console.error('subscribeToGroups error:', err);
+    onError?.(err);
   });
 }
 
 export async function createSession(name, date, groupId, groupName, userId) {
+  const [y, m, d] = date.split('-').map(Number);
   return addDoc(collection(db, 'sessions'), {
     name,
-    date: Timestamp.fromDate(new Date(date)),
+    date: Timestamp.fromDate(new Date(y, m - 1, d)),
     groupId,
     groupName: groupName || '',
     createdBy: userId,
@@ -118,7 +122,7 @@ export async function getUserSessions(groupIds) {
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export function subscribeToSessions(groupIds, callback) {
+export function subscribeToSessions(groupIds, callback, onError) {
   if (!groupIds || groupIds.length === 0) {
     callback([]);
     return () => {};
@@ -130,6 +134,9 @@ export function subscribeToSessions(groupIds, callback) {
   );
   return onSnapshot(q, snapshot => {
     callback(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+  }, err => {
+    console.error('subscribeToSessions error:', err);
+    onError?.(err);
   });
 }
 
@@ -191,4 +198,12 @@ export function subscribeToNotes(groupId, callback, onError) {
 
 export async function deleteNote(noteId) {
   return deleteDoc(doc(db, 'notes', noteId));
+}
+
+export async function deleteGroup(groupId) {
+  return deleteDoc(doc(db, 'groups', groupId));
+}
+
+export async function deleteSession(sessionId) {
+  return deleteDoc(doc(db, 'sessions', sessionId));
 }

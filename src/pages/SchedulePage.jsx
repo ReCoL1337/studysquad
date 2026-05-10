@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, useToast } from '../App';
 import {
-  subscribeToGroups, createSession, subscribeToSessions, getGroupColor
+  subscribeToGroups, createSession, subscribeToSessions, deleteSession, getGroupColor
 } from '../services/firestoreService';
 import { useVibration } from '../hooks/useVibration';
 
@@ -86,6 +86,16 @@ export default function SchedulePage() {
   const nextMonth = () => {
     if (month === 11) { setMonth(0); setYear(y => y + 1); }
     else setMonth(m => m + 1);
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    if (!window.confirm('Delete this session?')) return;
+    try {
+      await deleteSession(sessionId);
+      showToast('Session deleted', 'success');
+    } catch {
+      showToast('Failed to delete session', 'error');
+    }
   };
 
   const handleCreate = async () => {
@@ -195,10 +205,18 @@ export default function SchedulePage() {
                     {g.name.charAt(0)}
                   </div>
                 )}
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</div>
                   {g && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{g.name}</div>}
                 </div>
+                {s.createdBy === user?.uid && (
+                  <button
+                    onClick={() => handleDeleteSession(s.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', color: 'var(--text-muted)', fontSize: 16 }}
+                  >
+                    <i className="bi bi-trash3"></i>
+                  </button>
+                )}
               </div>
             );
           })}

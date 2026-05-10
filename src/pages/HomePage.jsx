@@ -31,10 +31,13 @@ export default function HomePage() {
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const upcomingSessions = sessions
     .filter(s => {
       const d = s.date?.toDate ? s.date.toDate() : new Date(s.date);
-      return d >= new Date();
+      return d >= today;
     })
     .slice(0, 4);
 
