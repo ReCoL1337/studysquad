@@ -58,8 +58,13 @@ export default function GroupDetailPage() {
   const handleSend = async () => {
     if (!text.trim()) return;
     const displayName = user.displayName || user.email?.split('@')[0] || 'Student';
-    await sendMessage(groupId, text.trim(), user.uid, displayName);
-    setText('');
+    try {
+      await sendMessage(groupId, text.trim(), user.uid, displayName);
+      setText('');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to send message', 'error');
+    }
   };
 
   // Device Feature #2: Camera / Gallery for note upload

@@ -145,7 +145,7 @@ export async function sendMessage(groupId, text, userId, userName) {
   });
 }
 
-export function subscribeToMessages(groupId, callback) {
+export function subscribeToMessages(groupId, callback, onError) {
   const q = query(
     collection(db, 'messages'),
     where('groupId', '==', groupId),
@@ -153,6 +153,9 @@ export function subscribeToMessages(groupId, callback) {
   );
   return onSnapshot(q, snapshot => {
     callback(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+  }, err => {
+    console.error('subscribeToMessages error:', err);
+    onError?.(err);
   });
 }
 
@@ -172,7 +175,7 @@ export async function saveNote(groupId, name, fileUrl, uploadedBy, uploadedByNam
   });
 }
 
-export function subscribeToNotes(groupId, callback) {
+export function subscribeToNotes(groupId, callback, onError) {
   const q = query(
     collection(db, 'notes'),
     where('groupId', '==', groupId),
@@ -180,6 +183,9 @@ export function subscribeToNotes(groupId, callback) {
   );
   return onSnapshot(q, snapshot => {
     callback(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+  }, err => {
+    console.error('subscribeToNotes error:', err);
+    onError?.(err);
   });
 }
 
