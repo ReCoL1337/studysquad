@@ -1,53 +1,39 @@
-<div align="center">
-  <h1>🎓 StudySquad</h1>
-  <p>
-    <b>Nowoczesna platforma ułatwiająca studentom i uczniom wspólną naukę, organizację materiałów oraz zarządzanie projektami w grupach.</b>
-  </p>
-  
-  ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
-  ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
-  ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
-  ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
-  ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
-</div>
+# 🎓 StudySquad
 
----
+StudySquad to nowoczesna aplikacja internetowa stworzona z myślą o studentach. Ułatwia organizację nauki, tworzenie grup badawczych oraz współdzielenie materiałów edukacyjnych. 
 
-## 📖 O projekcie
+Projekt został zbudowany z naciskiem na wydajność i szybkość działania, wykorzystując nowoczesny ekosystem biblioteki React oraz infrastrukturę chmurową Firebase.
 
-**StudySquad** to aplikacja fullstackowa stworzona w celu integracji środowiska studenckiego. Rozwiązuje problem rozproszonych notatek, braku komunikacji w grupach projektowych i chaosu organizacyjnego. Dzięki intuicyjnemu interfejsowi użytkownicy mogą skupić się na tym, co najważniejsze – na efektywnej nauce.
+## 🛠️ Technologie (Tech Stack)
 
-### ✨ Główne założenia (Features)
-* 🤝 **Grupy naukowe:** Tworzenie i dołączanie do dedykowanych zespołów zadaniowych.
-* 📁 **Zarządzanie materiałami:** Łatwe współdzielenie plików i notatek.
-* 📅 **Organizacja czasu:** Śledzenie terminów oddania projektów i kolokwiów.
-* ⚙️ **Skalowalna architektura:** Projekt oparty na solidnych fundamentach i dobrych praktykach Reacta (Custom Hooks, reużywalne komponenty).
+*   **Frontend:** React 18, Vite (jako bundler)
+*   **Routing:** React Router v6
+*   **Backend & Baza Danych:** Firebase (Firestore)
+*   **Magazyn Plików:** Firebase Cloud Storage (przechowywanie materiałów)
+*   **Autoryzacja:** Firebase Authentication
+*   **Hosting:** Firebase Hosting
 
----
+## 🚀 Główne funkcjonalności
 
-## 🚀 Technologie
+*   **Zarządzanie Użytkownikami:** Rejestracja i logowanie studentów.
+*   **Grupy Naukowe:** Możliwość tworzenia nowych grup, wyszukiwania istniejących i dołączania do nich.
+*   **Współdzielenie Materiałów:** Wgrywanie i pobieranie plików (notatek, prezentacji) wewnątrz grup dzięki Firebase Storage.
+*   **Aktualizacje na żywo:** Błyskawiczna synchronizacja danych między użytkownikami dzięki Firestore.
 
-Projekt wykorzystuje nowoczesny stos technologiczny (MERN):
+## 📁 Struktura Projektu
 
-**Frontend:**
-* [React 18](https://reactjs.org/) (inicjalizacja przez [Vite](https://vitejs.dev/))
-* JavaScript (ES6+)
+Główny kod aplikacji znajduje się w katalogu `src/`:
 
-**Backend:**
-* [Node.js](https://nodejs.org/) & [Express.js](https://expressjs.com/)
-* [MongoDB](https://www.mongodb.com/) (z [Mongoose](https://mongoosejs.com/))
+*   `assets/` - pliki statyczne (ikony, obrazki, grafiki).
+*   `components/` - komponenty interfejsu (np. przyciski, karty grup, paski nawigacji).
+*   `constants/` - globalne stałe, konfiguracje i linki.
+*   `hooks/` - własne hooki (Custom Hooks), np. `useLocalStorage` do zarządzania pamięcią przeglądarki lub hooki do autoryzacji Firebase.
+*   `utils/` - funkcje pomocnicze (np. formatowanie dat, parsowanie danych).
+*   `App.jsx` - główny komponent aplikacji zawierający konfigurację ścieżek (routingu).
+*   `main.jsx` - punkt wejścia aplikacji, podpinający Reacta do drzewa DOM.
 
----
+Pliki w głównym katalogu (takie jak `firebase.json`, `.firebaserc`, `firestore.rules`, `storage.rules`) odpowiadają za konfigurację środowiska chmurowego, zabezpieczenia bazy danych oraz reguły dostępu do plików.
 
-## 📂 Struktura folderów (Frontend)
+## Dostęp do aplikacji 🌐
 
-Zastosowano modularną architekturę ułatwiającą rozwój aplikacji:
-
-```text
-src/
-├── components/   # Reużywalne elementy UI (np. Loader)
-├── hooks/        # Własne hooki Reacta (np. useLocalStorage)
-├── utils/        # Funkcje pomocnicze i formatujące dane
-├── constants/    # Globalne zmienne i konfiguracja (np. routing)
-├── App.jsx       # Główny komponent aplikacji
-└── main.jsx      # Punkt wejścia (entry point) aplikacji
+[link](https://studysquad-bdb91.web.app/)
